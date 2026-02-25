@@ -66,6 +66,21 @@ macro_rules! identify_chain {
 					Err("`westend-native` feature not enabled")
 				}
 			},
+			Chain::ScanboRelay => {
+				#[cfg(feature = "scanbo-relay-native")]
+				{
+					use scanbo_relay_runtime as runtime;
+
+					let call = $generic_code;
+
+					Ok(scanbo_relay_sign_call(call, $nonce, $current_block, $period, $genesis, $signer))
+				}
+
+				#[cfg(not(feature = "scanbo-relay-native"))]
+				{
+					Err("`scanbo-relay-native` feature not enabled")
+				}
+			},
 			Chain::Unknown => {
 				let _ = $nonce;
 				let _ = $current_block;
@@ -271,4 +286,63 @@ pub fn benchmark_inherent_data(
 	inherent_data.put_data(polkadot_primitives::PARACHAINS_INHERENT_IDENTIFIER, &para_data)?;
 
 	Ok(inherent_data)
+}
+
+#[cfg(feature = "scanbo-relay-native")]
+fn scanbo_relay_sign_call(
+	call: scanbo_relay_runtime::RuntimeCall,
+	nonce: u32,
+	current_block: u64,
+	period: u64,
+	genesis: sp_core::H256,
+	acc: sp_core::sr25519::Pair,
+) -> OpaqueExtrinsic {
+	use codec::Encode;
+	use scanbo_relay_runtime as runtime;
+	use sp_core::Pair;
+
+	let tx_ext: runtime::TxExtension = (
+		frame_system::AuthorizeCall::<runtime::Runtime>::new(),
+		frame_system::CheckNonZeroSender::<runtime::Runtime>::new(),
+		frame_system::CheckSpecVersion::<runtime::Runtime>::new(),
+		frame_system::CheckTxVersion::<runtime::Runtime>::new(),
+		frame_system::CheckGenesis::<runtime::Runtime>::new(),
+		frame_system::CheckMortality::<runtime::Runtime>::from(sp_runtime::generic::Era::mortal(
+			period,
+			current_block,
+		)),
+		frame_system::CheckNonce::<runtime::Runtime>::from(nonce),
+		frame_system::CheckWeight::<runtime::Runtime>::new(),
+		pallet_transaction_payment::ChargeTransactionPayment::<runtime::Runtime>::from(0),
+		frame_metadata_hash_extension::CheckMetadataHash::<runtime::Runtime>::new(false),
+		frame_system::WeightReclaim::<runtime::Runtime>::new(),
+	)
+		.into();
+
+	let payload = runtime::SignedPayload::from_raw(
+		call.clone(),
+		tx_ext.clone(),
+		(
+			(),
+			(),
+			runtime::VERSION.spec_version,
+			runtime::VERSION.transaction_version,
+			genesis,
+			genesis,
+			(),
+			(),
+			(),
+			None,
+			(),
+		),
+	);
+
+	let signature = payload.using_encoded(|p| acc.sign(p));
+	runtime::UncheckedExtrinsic::new_signed(
+		call,
+		sp_runtime::AccountId32::from(acc.public()).into(),
+		polkadot_core_primitives::Signature::Sr25519(signature),
+		tx_ext,
+	)
+	.into()
 }

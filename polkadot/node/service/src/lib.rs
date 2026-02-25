@@ -73,7 +73,7 @@ use std::{path::PathBuf, sync::Arc};
 use prometheus_endpoint::Registry;
 use sc_service::SpawnTaskHandle;
 
-pub use chain_spec::{GenericChainSpec, RococoChainSpec, WestendChainSpec};
+pub use chain_spec::{GenericChainSpec, RococoChainSpec, WestendChainSpec, ScanboRelayChainSpec};
 pub use polkadot_primitives::{Block, BlockId, BlockNumber, CollatorPair, Hash, Id as ParaId};
 pub use sc_client_api::{Backend, CallExecutor};
 pub use sc_consensus::{BlockImport, LongestChain};
@@ -95,6 +95,8 @@ pub use sp_runtime::{
 pub use {rococo_runtime, rococo_runtime_constants};
 #[cfg(feature = "westend-native")]
 pub use {westend_runtime, westend_runtime_constants};
+#[cfg(feature = "scanbo-relay-native")]
+pub use {scanbo_relay_runtime, scanbo_relay_runtime_constants};
 
 pub use fake_runtime_api::{GetLastTimestamp, RuntimeApi};
 
@@ -252,6 +254,8 @@ pub enum Chain {
 	Rococo,
 	/// Westend.
 	Westend,
+	/// Scanbo Relay.
+	ScanboRelay,
 	/// Unknown chain?
 	Unknown,
 }
@@ -272,6 +276,9 @@ pub trait IdentifyVariant {
 
 	/// Returns if this is a configuration for the `Versi` test network.
 	fn is_versi(&self) -> bool;
+
+	/// Returns if this is a configuration for the `Scanbo Relay` network.
+	fn is_scanbo_relay(&self) -> bool;
 
 	/// Returns true if this configuration is for a development network.
 	fn is_dev(&self) -> bool;
@@ -296,6 +303,9 @@ impl IdentifyVariant for Box<dyn ChainSpec> {
 	fn is_versi(&self) -> bool {
 		self.id().starts_with("versi") || self.id().starts_with("vrs")
 	}
+	fn is_scanbo_relay(&self) -> bool {
+		self.id().starts_with("scanbo") || self.id().starts_with("sbo")
+	}
 	fn is_dev(&self) -> bool {
 		self.id().ends_with("dev")
 	}
@@ -306,6 +316,8 @@ impl IdentifyVariant for Box<dyn ChainSpec> {
 			Chain::Kusama
 		} else if self.is_westend() {
 			Chain::Westend
+		} else if self.is_scanbo_relay() {
+			Chain::ScanboRelay
 		} else if self.is_rococo() || self.is_versi() {
 			Chain::Rococo
 		} else {
@@ -418,6 +430,8 @@ pub fn new_chain_ops(
 	} else if config.chain_spec.is_kusama() {
 		chain_ops!(config, None)
 	} else if config.chain_spec.is_westend() {
+		return chain_ops!(config, None);
+	} else if config.chain_spec.is_scanbo_relay() {
 		return chain_ops!(config, None);
 	} else {
 		chain_ops!(config, None)

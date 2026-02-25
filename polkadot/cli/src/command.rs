@@ -128,7 +128,7 @@ impl SubstrateCli for Cli {
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		let id = if id == "" {
 			let n = get_exec_name().unwrap_or_default();
-			["polkadot", "kusama", "westend", "rococo", "versi"]
+			["polkadot", "kusama", "westend", "rococo", "versi", "scanbo-relay"]
 				.iter()
 				.cloned()
 				.find(|&chain| n.starts_with(chain))
@@ -170,6 +170,11 @@ impl SubstrateCli for Cli {
 			#[cfg(not(feature = "rococo-native"))]
 			name if name.starts_with("versi-") =>
 				Err(format!("`{}` only supported with `rococo-native` feature enabled.", name))?,
+			#[cfg(feature = "scanbo-relay-native")]
+			"scanbo-relay-local" | "sbo-local" => Box::new(polkadot_service::chain_spec::scanbo_relay_local_testnet_config()?),
+			#[cfg(not(feature = "scanbo-relay-native"))]
+			name if name.starts_with("scanbo-relay-") || name == "sbo-local" =>
+				Err(format!("`{}` only supported with `scanbo-relay-native` feature enabled.", name))?,
 			path => {
 				let path = std::path::PathBuf::from(path);
 
@@ -187,6 +192,8 @@ impl SubstrateCli for Cli {
 					Box::new(polkadot_service::GenericChainSpec::from_json_file(path)?)
 				} else if self.run.force_westend || chain_spec.is_westend() {
 					Box::new(polkadot_service::WestendChainSpec::from_json_file(path)?)
+				} else if self.run.force_scanbo_relay || chain_spec.is_scanbo_relay() {
+					Box::new(polkadot_service::ScanboRelayChainSpec::from_json_file(path)?)
 				} else {
 					chain_spec
 				}

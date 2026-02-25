@@ -100,6 +100,7 @@ fast-runtime = ["polkadot-cli/fast-runtime"]
 runtime-metrics = ["polkadot-cli/runtime-metrics"]
 pyroscope = ["polkadot-cli/pyroscope"]
 jemalloc-allocator = ["polkadot-jemalloc-shim/jemalloc-allocator"]
+scanbo-relay-native = ["polkadot-cli/scanbo-relay-native"]
 
 # Generate the metadata hash needed for CheckMetadataHash
 # in the builtin test runtimes (westend and rococo).

@@ -76,6 +76,7 @@ pyroscope = ["dep:pyroscope", "pyroscope_pprofrs"]
 # Configure the native runtimes to use.
 westend-native = ["polkadot-service/westend-native"]
 rococo-native = ["polkadot-service/rococo-native"]
+scanbo-relay-native = ["polkadot-service/scanbo-relay-native"]
 
 malus = ["full-node", "polkadot-service/malus"]
 runtime-metrics = [

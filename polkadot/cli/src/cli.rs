@@ -85,6 +85,10 @@ pub struct RunCmd {
 	#[arg(long = "force-rococo")]
 	pub force_rococo: bool,
 
+	/// Force using Scanbo Relay native runtime.
+	#[arg(long = "force-scanbo-relay")]
+	pub force_scanbo_relay: bool,
+
 	/// Disable the BEEFY gadget.
 	///
 	/// Currently enabled by default.

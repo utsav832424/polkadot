@@ -26,6 +26,8 @@ use sc_telemetry::TelemetryEndpoints;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "westend-native")]
 use westend_runtime as westend;
+#[cfg(feature = "scanbo-relay-native")]
+use scanbo_relay_runtime as scanbo_relay;
 
 #[cfg(feature = "westend-native")]
 const WESTEND_STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -64,6 +66,14 @@ pub type WestendChainSpec = sc_service::GenericChainSpec<Extensions>;
 // Dummy chain spec, but that is fine when we don't have the native runtime.
 #[cfg(not(feature = "westend-native"))]
 pub type WestendChainSpec = GenericChainSpec;
+
+/// The `ChainSpec` parameterized for the scanbo-relay runtime.
+#[cfg(feature = "scanbo-relay-native")]
+pub type ScanboRelayChainSpec = sc_service::GenericChainSpec<Extensions>;
+
+/// The `ChainSpec` parameterized for the scanbo-relay runtime.
+#[cfg(not(feature = "scanbo-relay-native"))]
+pub type ScanboRelayChainSpec = GenericChainSpec;
 
 /// The `ChainSpec` parameterized for the rococo runtime.
 #[cfg(feature = "rococo-native")]
@@ -251,5 +261,20 @@ pub fn versi_local_testnet_config() -> Result<RococoChainSpec, String> {
 	.with_chain_type(ChainType::Local)
 	.with_genesis_config_preset_name("versi_local_testnet")
 	.with_protocol_id("versi")
+	.build())
+}
+
+/// Scanbo Relay local testnet config (multivalidator Alice + Bob)
+#[cfg(feature = "scanbo-relay-native")]
+pub fn scanbo_relay_local_testnet_config() -> Result<ScanboRelayChainSpec, String> {
+	Ok(ScanboRelayChainSpec::builder(
+		scanbo_relay::WASM_BINARY.ok_or("Scanbo Relay development wasm not available")?,
+		Default::default(),
+	)
+	.with_name("Scanbo Relay Local Testnet")
+	.with_id("scanbo_relay_local")
+	.with_chain_type(ChainType::Local)
+	.with_genesis_config_preset_name(sp_genesis_builder::LOCAL_TESTNET_RUNTIME_PRESET)
+	.with_protocol_id("sbo")
 	.build())
 }

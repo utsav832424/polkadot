@@ -102,10 +102,12 @@ polkadot-runtime-parachains = { workspace = true, default-features = true }
 # Polkadot Runtime Constants
 rococo-runtime-constants = { optional = true, workspace = true, default-features = true }
 westend-runtime-constants = { optional = true, workspace = true, default-features = true }
+scanbo-relay-runtime-constants = { optional = true, path = "../../runtime/scanbo-relay/constants", default-features = true }
 
 # Polkadot Runtimes
 rococo-runtime = { optional = true, workspace = true }
 westend-runtime = { optional = true, workspace = true, default-features = true }
+scanbo-relay-runtime = { optional = true, path = "../../runtime/scanbo-relay", default-features = true }
 
 # Polkadot Subsystems
 polkadot-approval-distribution = { optional = true, workspace = true, default-features = true }
@@ -186,6 +188,11 @@ rococo-native = [
 	"frame-metadata-hash-extension",
 	"rococo-runtime",
 	"rococo-runtime-constants",
+]
+scanbo-relay-native = [
+	"frame-metadata-hash-extension",
+	"scanbo-relay-runtime",
+	"scanbo-relay-runtime-constants",
 ]
 
 # Generate the metadata hash needed for CheckMetadataHash
