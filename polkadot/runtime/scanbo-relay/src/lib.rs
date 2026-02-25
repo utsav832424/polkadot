@@ -155,6 +155,7 @@ use xcm_config::XcmConfig;
 
 #[cfg(test)]
 mod tests;
+pub mod hospital_registry;
 
 impl_runtime_weights!(scanbo_relay_runtime_constants);
 
@@ -173,7 +174,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: alloc::borrow::Cow::Borrowed("scanbo-relay"),
 	impl_name: alloc::borrow::Cow::Borrowed("scanbo-relay"),
 	authoring_version: 2,
-	spec_version: 1_000_002,
+	spec_version: 1_000_003,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -1812,6 +1813,10 @@ impl pallet_meta_tx::Config for Runtime {
 	type Extension = pallet_meta_tx::WeightlessExtension<Runtime>;
 }
 
+impl hospital_registry::Config for Runtime {
+	type MaxStringLen = ConstU32<100>;
+}
+
 impl pallet_verify_signature::Config for Runtime {
 	type Signature = MultiSignature;
 	type AccountIdentifier = MultiSigner;
@@ -2038,6 +2043,9 @@ mod runtime {
 	// Pallet for migrating Identity to a parachain. To be removed post-migration.
 	#[runtime::pallet_index(248)]
 	pub type IdentityMigrator = identity_migrator;
+
+	#[runtime::pallet_index(250)]
+	pub type HospitalRegistry = hospital_registry;
 }
 
 /// The address format for describing accounts.
