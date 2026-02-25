@@ -173,7 +173,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: alloc::borrow::Cow::Borrowed("scanbo-relay"),
 	impl_name: alloc::borrow::Cow::Borrowed("scanbo-relay"),
 	authoring_version: 2,
-	spec_version: 1_000_000,
+	spec_version: 1_000_002,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,

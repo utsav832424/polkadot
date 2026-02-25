@@ -1,112 +1,110 @@
-<div align="center">
+# Scanbo Relay Chain
 
-![SDK Logo](./docs/images/Polkadot_Logo_Horizontal_Pink_White.png#gh-dark-mode-only)
-![SDK Logo](./docs/images/Polkadot_Logo_Horizontal_Pink_Black.png#gh-light-mode-only)
+A custom relay chain built on the Polkadot SDK, based on the Westend runtime template.
 
-# Polkadot SDK
+## 🚀 Setup & Build
 
-![GitHub stars](https://img.shields.io/github/stars/paritytech/polkadot-sdk)&nbsp;&nbsp;![GitHub
-forks](https://img.shields.io/github/forks/paritytech/polkadot-sdk)
+### Prerequisites
+- [Rust & Cargo](https://rustup.rs/)
+- Dependencies for Polkadot SDK (see [Substrate docs](https://docs.substrate.io/install/))
 
-<!-- markdownlint-disable-next-line MD013 -->
-[![StackExchange](https://img.shields.io/badge/StackExchange-Community%20&%20Support-222222?logo=stackexchange)](https://substrate.stackexchange.com/)&nbsp;&nbsp;![GitHub contributors](https://img.shields.io/github/contributors/paritytech/polkadot-sdk)&nbsp;&nbsp;![GitHub commit activity](https://img.shields.io/github/commit-activity/m/paritytech/polkadot-sdk)&nbsp;&nbsp;![GitHub last commit](https://img.shields.io/github/last-commit/paritytech/polkadot-sdk)
-
-> The Polkadot SDK repository provides all the components needed to start building on the
-> [Polkadot](https://polkadot.com/) network, a multi-chain blockchain platform that enables
-> different blockchains to interoperate and share information in a secure and scalable way.
-
-</div>
-
-## ⚡ Quickstart
-If you want to get an example node running quickly you can execute the following getting started script:
-
-```
-curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/paritytech/polkadot-sdk/master/scripts/getting-started.sh | bash
+### Build Instructions
+Build the node and parachain workers in release mode:
+```bash
+cargo build --release --bin polkadot \
+  --bin polkadot-execute-worker \
+  --bin polkadot-prepare-worker \
+  --features scanbo-relay-native
 ```
 
-## 👩🏽‍💻 Building
+## 🛠 Chain Configuration
 
-In order to build this project you need to install some dependencies, follow the instructions in [this guide](https://docs.polkadot.com/develop/parachains/install-polkadot-sdk).
+### 1. Clear Old Data (Optional)
+```bash
+rm -rf /tmp/alice /tmp/bob
+```
 
-### 🎯 Build targets
+### 2. Generate Raw Chain Spec
+```bash
+./target/release/polkadot build-spec --chain scanbo-relay-local --raw --disable-default-bootnode > scanbo-relay-local.json
+```
 
-When building full runtimes, the WASM builder takes care of all required configuration.  
-For individual crates, however, there are a few caveats when targeting `no_std`.
+## 🏃 Running the Chain
 
-#### WASM
-Set `RUSTFLAGS="--cfg substrate_runtime"` when building for WASM. See the
-[WASM build](https://paritytech.github.io/polkadot-sdk/master/polkadot_sdk_docs/polkadot_sdk/substrate/index.html#wasm-build)
-in the Polkadot SDK Documentation.
+### Validator 1: Alice (Sudo)
+```bash
+./target/release/polkadot \
+  --chain scanbo-relay-local.json \
+  --alice \
+  --validator \
+  --base-path /tmp/alice \
+  --port 30333 \
+  --rpc-port 9944 \
+  --unsafe-force-node-key-generation \
+  --insecure-validator-i-know-what-i-do
+```
+*Take note of the Peer ID in the logs (e.g., `12D3KooWJooZQnES8eokLgZwYuA6RCFany8gMQxBRJq64WZ1QW1k`).*
 
-#### PolkaVM
-PolkaVM builds require some `riscv32` or `riscv64` target architecture.  
-See the CI example: [RiscV-build](https://github.com/paritytech/polkadot-sdk/blob/6de451a105ca0a5feb675a215d4e8de5207febf6/.github/workflows/build-misc.yml#L55).
+### Validator 2: Bob
+Replace `<ALICE_PEER_ID>` with the ID from above:
+```bash
+./target/release/polkadot \
+  --chain scanbo-relay-local.json \
+  --bob \
+  --validator \
+  --base-path /tmp/bob \
+  --port 30334 \
+  --rpc-port 9945 \
+  --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/<ALICE_PEER_ID> \
+  --unsafe-force-node-key-generation \
+  --insecure-validator-i-know-what-i-do
+```
 
-## 📚 Documentation
+## 🆙 Runtime Upgrade
 
-* [Polkadot Documentation Portal](https://docs.polkadot.com)
-* [🦀 rust-docs](https://paritytech.github.io/polkadot-sdk/master/polkadot_sdk_docs/index.html): Where we keep track of
-the API docs of our Rust crates. Includes:
-  * [Introduction](https://paritytech.github.io/polkadot-sdk/master/polkadot_sdk_docs/polkadot_sdk/index.html)
-	to each component of the Polkadot SDK: Substrate, FRAME, Cumulus, and XCM
-  * [Guides](https://paritytech.github.io/polkadot-sdk/master/polkadot_sdk_docs/guides/index.html),
-	namely how to build your first FRAME pallet
-  * [Templates](https://paritytech.github.io/polkadot-sdk/master/polkadot_sdk_docs/polkadot_sdk/templates/index.html)
-    for starting a new project.
-  * [External Resources](https://paritytech.github.io/polkadot-sdk/master/polkadot_sdk_docs/external_resources/index.html)
-* Have a question? You can ask in the Polkadot SDK Developers Chat.
-Messages from either of these channels are bridged to the other, so you can use whichever one you like.
-  * [Telegram](https://t.me/substratedevs)
-  * [Matrix](https://matrix.to/#/#substratedevs:matrix.org)
-  * [Discord](https://discord.com/channels/722223075629727774/997505821955076196)
-  * [Polkadot and Substrate StackExchange](https://substrate.stackexchange.com/)
+1. Increment `spec_version` in `polkadot/runtime/scanbo-relay/src/lib.rs`.
+2. Rebuild the runtime:
+   ```bash
+   cargo build --release --bin polkadot --features scanbo-relay-native
+   ```
+3. Locate the WASM file:
+   `./target/release/wbuild/scanbo-relay-runtime/scanbo_relay_runtime.compact.compressed.wasm`
+4. Submit the upgrade extrinsic via Polkadot.js Apps:
+   - **Sudo -> sudo(system.setCode(wasm_file))**
 
-## 🚀 Releases
+---
 
-<!-- markdownlint-disable-next-line MD013 -->
-![Current Stable Release](https://raw.githubusercontent.com/paritytech/release-registry/main/badges/polkadot-sdk-latest.svg)&nbsp;&nbsp;![Next Stable Release](https://raw.githubusercontent.com/paritytech/release-registry/main/badges/polkadot-sdk-next.svg)
+### Important Notes
+- **macOS Users**: The `--insecure-validator-i-know-what-i-do` flag is required because the default secure validator mode is Linux-only.
+- **Genesis**: Alice is configured as both a validator and the Sudo root account.
 
-The Polkadot SDK is released every three months as a `Polkadot stableYYMM` release. Each stable release is supported for
-one year with patches. See the next upcoming versions in the [Release
-Registry](https://github.com/paritytech/release-registry/) and more docs in [RELEASE.md](./docs/RELEASE.md).
+---
 
-You can use [`psvm`](https://github.com/paritytech/psvm) to update all dependencies to a specific
-version without needing to manually select the correct version for each crate.
+## 📂 Modifications Registry
 
-## 🛠️ Tooling
+Below is a list of the core files modified to implement the `scanbo-relay` chain:
 
-[Polkadot SDK Version Manager](https://github.com/paritytech/psvm):
-A simple tool to manage and update the Polkadot SDK dependencies in any Cargo.toml file.
-It will automatically update the Polkadot SDK dependencies to their correct crates.io version.
+### Runtime Layer
+- **[polkadot/runtime/scanbo-relay/src/lib.rs](file:///Users/utsavbhikadiya2688/Code%20Projects/scanbo/newchain/polkadot-sdk/polkadot/runtime/scanbo-relay/src/lib.rs)**:
+    - Renamed runtime to `scanbo-relay`.
+    - Set `spec_version`, `impl_version`, and `transaction_version`.
+    - Configured `RUNTIME_API_VERSIONS`.
+- **[polkadot/runtime/scanbo-relay/src/genesis_config_presets.rs](file:///Users/utsavbhikadiya2688/Code%20Projects/scanbo/newchain/polkadot-sdk/polkadot/runtime/scanbo-relay/src/genesis_config_presets.rs)**:
+    - Modified `westend_testnet_genesis` and `testnet_accounts`.
+    - Unified validator and stash accounts (removed `//stash` derivation).
+    - Ensured Alice is the Sudo key and a validator.
+- **[polkadot/runtime/scanbo-relay/Cargo.toml](file:///Users/utsavbhikadiya2688/Code%20Projects/scanbo/newchain/polkadot-sdk/polkadot/runtime/scanbo-relay/Cargo.toml)**:
+    - Renamed package to `scanbo-relay-runtime`.
+    - Updated internal dependencies.
 
-## 🔐 Security
-
-The security policy and procedures can be found in
-[docs/contributor/SECURITY.md](./docs/contributor/SECURITY.md).
-
-## 🤍 Contributing & Code of Conduct
-
-Ensure you follow our [contribution guidelines](./docs/contributor/CONTRIBUTING.md). In every
-interaction and contribution, this project adheres to the [Contributor Covenant Code of
-Conduct](./docs/contributor/CODE_OF_CONDUCT.md).
-
-### 👾 Ready to Contribute?
-
-Take a look at the issues labeled with [`mentor`](https://github.com/paritytech/polkadot-sdk/labels/C1-mentor)
-(or alternatively [this](https://mentor.tasty.limo/) page, created by one of the maintainers) label to get started!
-We always recognize valuable contributions by proposing an on-chain tip to the Polkadot network as a token of our
-appreciation.
-
-## Polkadot Fellowship
-
-Development in this repo usually goes hand in hand with the `fellowship` organization. In short,
-this repository provides all the SDK pieces needed to build both Polkadot and its parachains. But,
-the actual Polkadot runtime lives in the `fellowship/runtimes` repository. Read more about the
-fellowship, this separation, the RFC process
-[here](https://polkadot-fellows.github.io/dashboard/).
-
-## History
-
-This repository is the amalgamation of 3 separate repositories that used to make up Polkadot SDK,
-namely Substrate, Polkadot and Cumulus. Read more about the merge and its history
-[here](https://polkadot-public.notion.site/Polkadot-SDK-FAQ-fbc4cecc2c46443fb37b9eeec2f0d85f).
+### Node & CLI Layer
+- **[polkadot/node/service/src/chain_spec.rs](file:///Users/utsavbhikadiya2688/Code%20Projects/scanbo/newchain/polkadot-sdk/polkadot/node/service/src/chain_spec.rs)**:
+    - Registered `scanbo_relay_local_testnet_config`.
+    - Integrated `scanbo-relay-runtime` into the build process.
+- **[polkadot/node/service/Cargo.toml](file:///Users/utsavbhikadiya2688/Code%20Projects/scanbo/newchain/polkadot-sdk/polkadot/node/service/Cargo.toml)**:
+    - Added `scanbo-relay-runtime` dependency.
+    - Defined `scanbo-relay-native` feature.
+- **[polkadot/cli/Cargo.toml](file:///Users/utsavbhikadiya2688/Code%20Projects/scanbo/newchain/polkadot-sdk/polkadot/cli/Cargo.toml)**:
+    - Added `scanbo-relay-native` feature to the CLI to enable the new runtime.
+- **[Cargo.toml](file:///Users/utsavbhikadiya2688/Code%20Projects/scanbo/newchain/polkadot-sdk/Cargo.toml)** (Root):
+    - Added `polkadot/runtime/scanbo-relay` to workspace members.
